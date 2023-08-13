@@ -643,6 +643,14 @@ function zvm_string_to_hex() {
   echo "$str"
 }
 
+# Copy to clipboard using ohmyzsh plugin
+# https://github.com/ohmyzsh/ohmyzsh/blob/master/lib/clipboard.zsh
+function zvm_clipcopy() { echo -n "$CUTBUFFER" | $ZVM_CLIP_COPY }
+
+# Paste from clipboard using ohmyzsh plugin
+# https://github.com/ohmyzsh/ohmyzsh/blob/master/lib/clipboard.zsh
+function zvm_clippaste() { CUTBUFFER=$(clippaste) }
+
 # Escape non-printed characters
 function zvm_escape_non_printed_characters() {
   local str=
@@ -684,8 +692,10 @@ function zvm_backward_kill_region() {
 
   bpos=$bpos+1
   CUTBUFFER=${BUFFER:$bpos:$((epos-bpos))}
+  printf '%s' "$CUTBUFFER" | clipcopy
   BUFFER="${BUFFER:0:$bpos}${BUFFER:$epos}"
   CURSOR=$bpos
+	zvm_clipcopy
 }
 
 # Remove all characters between the cursor position and the
@@ -708,6 +718,7 @@ function zvm_kill_line() {
   CUTBUFFER=${BUFFER:$bpos:$((epos-bpos))}$'\n'
   BUFFER="${BUFFER:0:$bpos}${BUFFER:$epos}"
   CURSOR=$bpos
+	zvm_clipcopy
 }
 
 # Remove all characters of the whole line.
@@ -723,6 +734,7 @@ function zvm_kill_whole_line() {
 
   BUFFER="${BUFFER:0:$bpos}${BUFFER:$epos}"
   CURSOR=$cpos
+	zvm_clipcopy
 }
 
 # Exchange the point and mark
@@ -1041,6 +1053,7 @@ function zvm_yank() {
     CUTBUFFER=${CUTBUFFER}$'\n'
   fi
   CURSOR=$bpos MARK=$epos
+	zvm_clipcopy
 }
 
 # Up case of the visual selection
@@ -1085,6 +1098,7 @@ function zvm_vi_yank() {
 
 # Put cutbuffer after the cursor
 function zvm_vi_put_after() {
+  zvm_clippaste
   local head= foot=
   local content=${CUTBUFFER}
   local offset=1
@@ -1137,7 +1151,8 @@ function zvm_vi_put_after() {
 
 # Put cutbuffer before the cursor
 function zvm_vi_put_before() {
-  local head= foot=
+  zvm_clippaste
+	local head= foot=
   local content=${CUTBUFFER}
 
   if [[ ${content: -1} == $'\n' ]]; then
@@ -1201,10 +1216,12 @@ function zvm_replace_selection() {
 
   BUFFER="${BUFFER:0:$bpos}${cutbuf}${BUFFER:$epos}"
   CURSOR=$cpos
+	zvm_clipcopy
 }
 
 # Replace characters of the visual selection
 function zvm_vi_replace_selection() {
+  zvm_clippaste
   zvm_replace_selection $CUTBUFFER
   zvm_exit_visual_mode ${1:-true}
 }
@@ -1256,6 +1273,7 @@ function zvm_vi_change() {
 
   zvm_exit_visual_mode false
   zvm_select_vi_mode $ZVM_MODE_INSERT ${1:-true}
+	zvm_clipcopy
 }
 
 # Change characters from cursor to the end of current line
@@ -1274,6 +1292,7 @@ function zvm_vi_change_eol() {
 
   zvm_reset_repeat_commands $ZVM_MODE c 0 $#CUTBUFFER
   zvm_select_vi_mode $ZVM_MODE_INSERT
+	zvm_clipcopy
 }
 
 # Default handler for unhandled key events
@@ -2140,6 +2159,7 @@ function zvm_change_surround_text_object() {
       CURSOR=$bpos
       ;;
   esac
+	zvm_clipcopy
 }
 
 # Repeat last change
